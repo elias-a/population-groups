@@ -22,7 +22,7 @@ def query_pubmed(query, email):
             "email": email,
             "db": "pubmed",
             "retmode": "xml",
-            "id": pmids,
+            "id": pmids[:300],
         },
     )
     return response.text
