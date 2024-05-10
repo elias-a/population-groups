@@ -15,15 +15,15 @@ def query_pubmed(query, email):
         },
     )
     pmids = response.json().get("esearchresult", {}).get("idlist", [])
-    response = requests.get(
+    response = requests.post(
         "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
         params={
             "tool": "population-groups",
             "email": email,
             "db": "pubmed",
             "retmode": "xml",
-            "id": pmids[:300],
         },
+        data={ "id": pmids },
     )
     return response.text
 
