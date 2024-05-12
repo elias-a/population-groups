@@ -1,18 +1,24 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, astuple
 from pubmed import query_pubmed, parse_article_xml
 from classify import classify
 
 
-@dataclass(kw_only)
+@dataclass(kw_only=True)
 class Accuracy:
     correct: int
     total: int
+
+    def __iter__(self):
+        return iter(astuple(self))
 
 
 @dataclass(kw_only=True)
 class PopGroup:
     mesh: str
     entry_term: str
+
+    def __iter__(self):
+        return iter(astuple(self))
 
 
 def count_correct(yes, no):
@@ -29,20 +35,23 @@ def get_labels(query, email):
 
 
 def process_group(group, email):
+    mesh, entry_term = group
     yes = get_labels(
-        f'"{group.entry_term}"[ti] AND 2024[dcom] AND "{group.mesh}"[mh:noexp]',
+        f'"{entry_term}"[ti] AND 2024[dcom] AND "{mesh}"[mh:noexp]',
         email,
     )
     no = get_labels(
-        f'"{group.entry_term}"[ti] AND 2024[dcom] NOT "{group.mesh}"[mh:noexp]',
+        f'"{entry_term}"[ti] AND 2024[dcom] NOT "{mesh}"[mh:noexp]',
         email,
     )
     return count_correct(yes, no)
 
 
 def run_pipeline(email):
-    [process_group(p, email) for p in [
+    correct, total = map(sum, zip(*[process_group(p, email) for p in [
         PopGroup(mesh="east asian people", entry_term="chinese"),
         PopGroup(mesh="east asian people", entry_term="japanese"),
         PopGroup(mesh="white", entry_term="white"),
-    ]]
+    ]]))
+    print(f"Number correct: {correct}. Total: {total}.")
+    print(f"Accuracy: {correct / total}")
